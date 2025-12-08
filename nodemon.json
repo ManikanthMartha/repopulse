@@ -1,0 +1,9 @@
+{
+  "watch": ["src", ".env"],
+  "ext": "ts,json",
+  "exec": "tsx src/app.ts",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "signal": "SIGTERM"
+}
