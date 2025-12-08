@@ -27,7 +27,6 @@ export const subscribeCommand = async (
   }
 
   // Check if repo exists on GitHub
-  // Check if repo exists on GitHub
   const githubApiUrl = `https://api.github.com/repos/${repoFullName}`;
   try {
     const fetch = (await import("node-fetch")).default;

@@ -11,6 +11,6 @@ I notify you your interested issues & PRs.
 Use:
   /subscribe <github_repo_url>
 Example:
-  /subscribe https://github.com/vercel/next.js`
+  /subscribe https://github.com/ManikanthMartha/repopulse`
   );
 };

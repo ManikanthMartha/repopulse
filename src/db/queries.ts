@@ -50,6 +50,19 @@ export async function saveSubscription(
   return result.rows[0];
 }
 
+export async function removeSubscription(
+  userId: number,
+  repoId: number
+): Promise<SubscriptionRecord> {
+    const sql = `
+      DELETE FROM subscriptions
+      WHERE user_id = $1 AND repo_id = $2
+      RETURNING id, user_id as "userId", repo_id as "repoId", filters
+    `;
+    const result = await query<SubscriptionRecord>(sql, [userId, repoId]);
+    return result.rows[0];
+}
+
 export async function getSubscriptionByRepo(
   userId: number,
   repoFullName: string
