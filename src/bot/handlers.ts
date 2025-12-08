@@ -4,7 +4,8 @@ import { startCommand } from "./commands/start";
 
 export function registerCommands(bot: TelegramBot) {
   bot.onText(/^\/start$/i, (msg) => startCommand(bot, msg));
-  bot.onText(/^\/subscribe(?:\s+(.+))?$/i, (msg, match) =>
-    subscribeCommand(bot, msg, match)
-  );
+  // Require at least one space and a non-empty repo URL after /subscribe
+  bot.onText(/^\/subscribe\s+(.+)/i, (msg, match) => {
+    subscribeCommand(bot, msg, match);
+  });
 }

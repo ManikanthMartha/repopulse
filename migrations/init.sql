@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS repositories (
     id SERIAL PRIMARY KEY,
-    full_name TEXT NOT NULL,
+    full_name TEXT UNIQUE NOT NULL,
     webhook_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

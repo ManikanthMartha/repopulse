@@ -6,7 +6,7 @@ export const startCommand = async (bot: TelegramBot, msg: TelegramBot.Message) =
   return bot.sendMessage(
     chatId,
     `Hey 👋 I'm RepoPulse.
-I notify you when interesting issues & PRs appear.
+I notify you your interested issues & PRs.
 
 Use:
   /subscribe <github_repo_url>
