@@ -1,15 +1,10 @@
 import TelegramBot from "node-telegram-bot-api";
-import { query } from "../../db/index";
+import { getUserRepos } from "../../db/queries";
+import { unsubscribeUserFromRepo } from '../../services/subscriptionService';
 
 // In-memory session for unsubscribe flow
 const unsubscribeSession: Record<number, { step: "repo" | null, repos: string[], selected: string[] }> = {};
 
-// Get all repo names for a user
-async function getUserRepos(telegramId: number): Promise<string[]> {
-  const sql = `SELECT r.full_name FROM subscriptions s INNER JOIN repositories r ON s.repo_id = r.id INNER JOIN users u ON s.user_id = u.id WHERE u.telegram_id = $1`;
-  const result = await query<{ full_name: string }>(sql, [telegramId]);
-  return result.rows.map((r) => r.full_name);
-}
 
 export const unsubscribeCommand = async (
   bot: TelegramBot,
@@ -65,10 +60,4 @@ export function registerUnsubscribeFlow(bot: TelegramBot) {
       return;
     }
   });
-}
-
-async function unsubscribeUserFromRepo(telegramId: number, repoFullName: string) {
-  // Remove subscription for user/repo
-  const sql = `DELETE FROM subscriptions WHERE user_id = (SELECT id FROM users WHERE telegram_id = $1) AND repo_id = (SELECT id FROM repositories WHERE full_name = $2)`;
-  await query(sql, [telegramId, repoFullName]);
 }

@@ -1,5 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import { saveSubscription } from "../../db/queries";
+import { getUserRepos, saveSubscription } from "../../db/queries";
 import { query } from "../../db/index";
 
 // In-memory session state (for demo; use Redis or DB for production)
@@ -14,12 +14,6 @@ const userSession: Record<
   }
 > = {};
 
-// Get all repo names for a user
-async function getUserRepos(telegramId: number): Promise<string[]> {
-  const sql = `SELECT r.full_name FROM subscriptions s INNER JOIN repositories r ON s.repo_id = r.id INNER JOIN users u ON s.user_id = u.id WHERE u.telegram_id = $1`;
-  const result = await query<{ full_name: string }>(sql, [telegramId]);
-  return result.rows.map((r) => r.full_name);
-}
 
 export const filtersCommand = async (
   bot: TelegramBot,

@@ -1,5 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import { subscribeUserToRepo } from "../../services/subscriptionService";
+import { fetchGithub } from '../../utils/fetchGithub';
+import { log } from "console";
+
 export const subscribeCommand = async (
   bot: TelegramBot,
   msg: TelegramBot.Message,
@@ -29,14 +32,12 @@ export const subscribeCommand = async (
   // Check if repo exists on GitHub
   const githubApiUrl = `https://api.github.com/repos/${repoFullName}`;
   try {
-    const fetch = (await import("node-fetch")).default;
-    const res = await fetch(githubApiUrl, { headers: { "User-Agent": "repopulse-bot" } });
-    if (res.status !== 200) {
-      return bot.sendMessage(chatId, `Repository '${repoFullName}' not found on GitHub.`);
-    }
+    await fetchGithub(githubApiUrl);
+    log(`[Bot] Repo ${repoFullName} exists on GitHub`);
   } catch (err) {
-    return bot.sendMessage(chatId, "Could not verify repository on GitHub. Try again later.");
+    return bot.sendMessage(chatId, `Repository '${repoFullName}' not found on GitHub.`);
   }
+
   try {
     const { repoFullName: savedRepo } = await subscribeUserToRepo(chatId, repoFullName);
     return bot.sendMessage(chatId, `Subscribed to ${savedRepo} 🎉`);

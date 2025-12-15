@@ -1,13 +1,13 @@
 # RepoPulse
 
-RepoPulse is a Telegram bot backed by a GitHub App. It keeps developers up to date with filtered repository activity by piping GitHub Issue / Pull Request events into Telegram chats.
+RepoPulse is a Telegram bot that keeps developers up to date with filtered repository activity by piping GitHub Issue / Pull Request events into Telegram chats using polling.
 
 ## Features
 
 - Telegram bot built with `node-telegram-bot-api`
-- GitHub App powered by `@octokit/app` + webhook delivery handling
-- Express server that exposes a webhook endpoint for GitHub and incoming bot webhooks
-- PostgreSQL persistence for users, repository subscriptions, label filters, and processed webhook IDs
+- Polls GitHub REST API for public repo issues/PRs
+- Telegram bot built with `node-telegram-bot-api`
+- PostgreSQL persistence for users, repository subscriptions, label filters, and last-seen timestamps
 - Label-based include/exclude filtering to limit noise
 - Render deployment configuration for a single Node service and managed Postgres instance
 
@@ -18,7 +18,7 @@ src/
   app.ts              # Application entry point
   server.ts           # Express server factory
   bot/                # Telegram bot initialization + commands
-  github/             # GitHub App + webhook event handlers
+   github/             # GitHub API polling logic
   db/                 # Database pool + query helpers
   services/           # Business logic (subscriptions, filters, notifications)
   utils/              # Reusable utilities (validation)
@@ -49,7 +49,7 @@ render.yaml           # Render deployment description
 
 ## Environment Variables
 
-See `.env.example` for the complete list. You will need Telegram bot credentials, GitHub App secrets, and a PostgreSQL connection string.
+See `.env.example` for the complete list. You will need Telegram bot credentials and a PostgreSQL connection string.
 
 ## Deployment
 

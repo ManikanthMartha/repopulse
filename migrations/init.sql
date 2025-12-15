@@ -4,11 +4,16 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+
 CREATE TABLE IF NOT EXISTS repositories (
     id SERIAL PRIMARY KEY,
     full_name TEXT UNIQUE NOT NULL,
-    webhook_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS repo_state (
+    repo_id INTEGER PRIMARY KEY REFERENCES repositories(id) ON DELETE CASCADE,
+    last_issue_check TIMESTAMP WITH TIME ZONE,
+    last_pr_check TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE IF NOT EXISTS subscriptions (

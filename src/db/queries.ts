@@ -12,6 +12,12 @@ export interface SubscriptionRecord {
   filters: SubscriptionFilters;
 }
 
+export interface RepoState {
+  repo_id: number;
+  last_issue_check: Date | null;
+  last_pr_check: Date | null;
+}
+
 export async function upsertUser(telegramId: number): Promise<number> {
   const sql = `
     INSERT INTO users (telegram_id)
@@ -64,7 +70,7 @@ export async function removeSubscription(
 }
 
 export async function getSubscriptionByRepo(
-  userId: number,
+  telegramId: number,
   repoFullName: string
 ): Promise<SubscriptionRecord | null> {
   const sql = `
@@ -74,10 +80,17 @@ export async function getSubscriptionByRepo(
            s.filters
     FROM subscriptions s
     INNER JOIN repositories r ON s.repo_id = r.id
-    WHERE s.user_id = $1 AND r.full_name = $2
+    INNER JOIN users u ON s.user_id = u.id
+    WHERE u.telegram_id = $1 AND r.full_name = $2
   `;
-  const result = await query<SubscriptionRecord>(sql, [userId, repoFullName]);
+  const result = await query<SubscriptionRecord>(sql, [telegramId, repoFullName]);
   return result.rows[0] ?? null;
+}
+
+export async function getUserRepos(telegramId: number): Promise<string[]> {
+  const sql = `SELECT r.full_name FROM subscriptions s INNER JOIN repositories r ON s.repo_id = r.id INNER JOIN users u ON s.user_id = u.id WHERE u.telegram_id = $1`;
+  const result = await query<{ full_name: string }>(sql, [telegramId]);
+  return result.rows.map((r) => r.full_name);
 }
 
 export async function isEventProcessed(deliveryId: string): Promise<boolean> {
@@ -89,4 +102,47 @@ export async function isEventProcessed(deliveryId: string): Promise<boolean> {
 export async function markEventProcessed(deliveryId: string): Promise<void> {
   const sql = 'INSERT INTO processed_events (id) VALUES ($1) ON CONFLICT DO NOTHING';
   await query(sql, [deliveryId]);
+}
+
+export async function getRepoState(repoId: number): Promise<RepoState | null> {
+  const sql = `SELECT repo_id, last_issue_check, last_pr_check FROM repo_state WHERE repo_id = $1`;
+  const result = await query<RepoState>(sql, [repoId]);
+  if (result.rows.length === 0) return null;
+  const row = result.rows[0];
+  return {
+    repo_id: row.repo_id,
+    last_issue_check: row.last_issue_check ? new Date(row.last_issue_check) : null,
+    last_pr_check: row.last_pr_check ? new Date(row.last_pr_check) : null,
+  };
+}
+
+export async function updateRepoState(repoId: number, lastIssueCheck: Date, lastPRCheck: Date): Promise<void> {
+  const sql = `
+    INSERT INTO repo_state (repo_id, last_issue_check, last_pr_check)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (repo_id)
+    DO UPDATE SET last_issue_check = $2, last_pr_check = $3
+  `;
+  await query(sql, [repoId, lastIssueCheck.toISOString(), lastPRCheck.toISOString()]);
+}
+
+export async function setInitialRepoState(repoId: number, lastIssueCheck: Date, lastPRCheck: Date): Promise<void> {
+  const sql = `
+    INSERT INTO repo_state (repo_id, last_issue_check, last_pr_check)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (repo_id) DO NOTHING
+  `;
+  await query(sql, [repoId, lastIssueCheck.toISOString(), lastPRCheck.toISOString()]);
+}
+
+export async function getUserIdByTelegramId(telegramId: number): Promise<number | null> {
+  const sql = `SELECT id FROM users WHERE telegram_id = $1`;
+  const result = await query<{ id: number }>(sql, [telegramId]);
+  return result.rows[0]?.id ?? null;
+}
+
+export async function getRepoIdByFullName(fullName: string): Promise<number | null> {
+  const sql = `SELECT id FROM repositories WHERE full_name = $1`;
+  const result = await query<{ id: number }>(sql, [fullName]);
+  return result.rows[0]?.id ?? null;
 }
