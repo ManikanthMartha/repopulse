@@ -3,32 +3,24 @@ services:
     name: repopulse-api
     env: node
     plan: starter
-    buildCommand: "npm install && npm run build"
-    startCommand: "npm run start"
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
     autoDeploy: true
     envVars:
       - key: DATABASE_URL
         fromService:
           name: repopulse-db
           type: postgres
-      - key: TELEGRAM_BOT_TOKEN
-        sync: false
-      - key: GITHUB_APP_ID
-        sync: false
-      - key: GITHUB_CLIENT_ID
-        sync: false
-      - key: GITHUB_CLIENT_SECRET
-        sync: false
-      - key: GITHUB_PRIVATE_KEY
-        sync: false
-      - key: GITHUB_WEBHOOK_SECRET
-        sync: false
       - key: EXTERNAL_URL
+        sync: false
+      - key: GITHUB_TOKEN
         sync: false
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
 
 databases:
   - name: repopulse-db
