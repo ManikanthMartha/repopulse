@@ -19,12 +19,12 @@ export async function subscribeUserToRepo(
   const repoId = await upsertRepository(repoFullName);
   const subscription = await saveSubscription(userId, repoId, {});
 
-  // Set initial repo state if not present
-  const state = await getRepoState(repoId);
+  // Set initial per-user-repo state if not present
+  const state = await getRepoState(userId, repoId);
   if (!state) {
     const now = new Date();
-    await setInitialRepoState(repoId, now, now);
-    console.log(`[Subscription] Initial repo_state set for ${repoFullName} (ID: ${repoId}) at ${now.toISOString()}`);
+    await setInitialRepoState(userId, repoId, now, now);
+    console.log(`[Subscription] Initial user_repo_state set for user ${userId}, repo ${repoFullName} (ID: ${repoId}) at ${now.toISOString()}`);
   }
 
   console.log(`User ${telegramId} subscribed to ${repoFullName}`);

@@ -4,9 +4,12 @@ import { registerCommands } from "./handlers";
 
 const BOT_COMMANDS = [
   { command: "start", description: "Register and get started" },
+  { command: "connect", description: "Connect your GitHub account" },
   { command: "subscribe", description: "Subscribe to a GitHub repository" },
   { command: "filter", description: "Set label filters for your subscriptions" },
   { command: "unsubscribe", description: "Unsubscribe from a GitHub repository" },
+  { command: "status", description: "View your account status" },
+  { command: "disconnect", description: "Unlink your GitHub account" },
 ];
 
 let bot: TelegramBot;
