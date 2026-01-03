@@ -1,14 +1,16 @@
 import TelegramBot from "node-telegram-bot-api";
 import { getUserRepos } from "../../db/queries";
-import { unsubscribeUserFromRepo } from '../../services/subscriptionService';
+import { unsubscribeUserFromRepo } from "../../services/subscriptionService";
 
 // In-memory session for unsubscribe flow
-const unsubscribeSession: Record<number, { step: "repo" | null, repos: string[], selected: string[] }> = {};
-
+const unsubscribeSession: Record<
+  number,
+  { step: "repo" | null; repos: string[]; selected: string[] }
+> = {};
 
 export const unsubscribeCommand = async (
   bot: TelegramBot,
-  msg: TelegramBot.Message
+  msg: TelegramBot.Message,
 ) => {
   const chatId = msg.chat.id;
   const telegramId = msg.from?.id;
@@ -19,15 +21,23 @@ export const unsubscribeCommand = async (
     return bot.sendMessage(chatId, "You have no subscriptions to unsubscribe.");
   }
 
-  unsubscribeSession[telegramId] = { step: "repo", repos: userRepos, selected: [] };
+  unsubscribeSession[telegramId] = {
+    step: "repo",
+    repos: userRepos,
+    selected: [],
+  };
   const keyboard = {
     reply_markup: {
       keyboard: userRepos.map((repo) => [{ text: repo }]),
       resize_keyboard: true,
-      one_time_keyboard: false
-    }
+      one_time_keyboard: false,
+    },
   };
-  await bot.sendMessage(chatId, "Select repos to unsubscribe (send one by one, type 'done' when finished):", keyboard);
+  await bot.sendMessage(
+    chatId,
+    "Select repos to unsubscribe (send one by one, type 'done' when finished):",
+    keyboard,
+  );
 };
 
 export function registerUnsubscribeFlow(bot: TelegramBot) {
@@ -49,7 +59,10 @@ export function registerUnsubscribeFlow(bot: TelegramBot) {
         for (const repo of session.selected) {
           await unsubscribeUserFromRepo(telegramId, repo);
         }
-        await bot.sendMessage(chatId, `Unsubscribed from: ${session.selected.join(", ")}`);
+        await bot.sendMessage(
+          chatId,
+          `Unsubscribed from: ${session.selected.join(", ")}`,
+        );
         delete unsubscribeSession[telegramId];
         return;
       }

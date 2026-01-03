@@ -8,7 +8,7 @@ async function bootstrap() {
 
   await initDB();
   initBot();
-  await import('./github/poller.js');
+  await import("./github/poller.js");
   initServer(config.PORT);
 
   console.log("RepoPulse running");

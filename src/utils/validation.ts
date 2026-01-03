@@ -9,7 +9,7 @@ export function requireEnv(name: string, fallback?: string): string {
 export function assertRepoFullName(fullName: string): string {
   const isValid = /.+\/.+/.test(fullName);
   if (!isValid) {
-    throw new Error('Repository must be in the form owner/name');
+    throw new Error("Repository must be in the form owner/name");
   }
   return fullName.toLowerCase();
 }
@@ -17,9 +17,9 @@ export function assertRepoFullName(fullName: string): string {
 export function repoInputToFullName(input: string): string {
   const trimmed = input.trim();
   const sanitized = trimmed
-    .replace(/^https?:\/\/github\.com\//i, '')
-    .replace(/\.git$/, '')
-    .replace(/\/$/, '');
+    .replace(/^https?:\/\/github\.com\//i, "")
+    .replace(/\.git$/, "")
+    .replace(/\/$/, "");
   return assertRepoFullName(sanitized);
 }
 

@@ -15,7 +15,7 @@ export async function initDB() {
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
-  params?: unknown[]
+  params?: unknown[],
 ): Promise<QueryResult<T>> {
   return pool.query<T>(text, params);
 }

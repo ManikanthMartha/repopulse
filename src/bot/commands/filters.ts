@@ -14,10 +14,54 @@ const userSession: Record<
   }
 > = {};
 
+/**
+ * Start filter flow for a specific repo (called after subscription)
+ */
+export async function startFilterFlow(
+  bot: TelegramBot,
+  chatId: number,
+  telegramId: number,
+  repoFullName: string,
+) {
+  userSession[telegramId] = {
+    step: "include",
+    repo: repoFullName,
+    include: [],
+    exclude: [],
+  };
+
+  const labels = await fetchRepoLabels(repoFullName);
+
+  if (!labels?.length) {
+    delete userSession[telegramId];
+    return bot.sendMessage(
+      chatId,
+      `No labels found for ${repoFullName}.\n\n` +
+        `You'll receive all issues and PRs without filtering.`,
+    );
+  }
+
+  userSession[telegramId].labels = labels;
+
+  const labelKeyboard = {
+    reply_markup: {
+      keyboard: labels.map((l) => [{ text: l }]),
+      resize_keyboard: true,
+      one_time_keyboard: false,
+    },
+  };
+
+  await bot.sendMessage(
+    chatId,
+    `🎯 *Setting filters for ${repoFullName}*\n\n` +
+      `Select labels to *INCLUDE* (send one by one, type 'done' when finished):`,
+    { ...labelKeyboard, parse_mode: "Markdown" },
+  );
+}
 
 export const filtersCommand = async (
   bot: TelegramBot,
-  msg: TelegramBot.Message
+  msg: TelegramBot.Message,
 ) => {
   const chatId = msg.chat.id;
   const telegramId = msg.from?.id;
@@ -67,7 +111,7 @@ export function registerFilterFlow(bot: TelegramBot) {
       await bot.sendMessage(
         chatId,
         "Select labels to INCLUDE (send one by one, type 'done' when finished):",
-        labelKeyboard
+        labelKeyboard,
       );
       session.include = [];
       return;
@@ -87,7 +131,7 @@ export function registerFilterFlow(bot: TelegramBot) {
         await bot.sendMessage(
           chatId,
           "Select labels to EXCLUDE (send one by one, type 'done' when finished):",
-          labelKeyboard
+          labelKeyboard,
         );
         return;
       }
@@ -112,7 +156,7 @@ export function registerFilterFlow(bot: TelegramBot) {
           chatId,
           `Filters updated for ${session.repo}!
 Include: ${filters.include.join(", ")}
-Exclude: ${filters.exclude.join(", ")}`
+Exclude: ${filters.exclude.join(", ")}`,
         );
         delete userSession[telegramId];
         return;
@@ -127,18 +171,48 @@ Exclude: ${filters.exclude.join(", ")}`
 }
 
 export async function fetchRepoLabels(repoFullName: string): Promise<string[]> {
-    const fetch = (await import("node-fetch")).default;
-    const url = `https://api.github.com/repos/${repoFullName}/labels`;
-    const res = await fetch(url, { headers: { "User-Agent": "repopulse-bot" } });
-    if (!res.ok) return [];
-    const labels = await res.json();
-    return (labels as Array<{ name: string }>).map((l) => l.name);
+  const fetch = (await import("node-fetch")).default;
+  const allLabels: string[] = [];
+  let page = 1;
+  const perPage = 100; // Max allowed by GitHub API
+
+  while (true) {
+    const url = `https://api.github.com/repos/${repoFullName}/labels?per_page=${perPage}&page=${page}`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "repopulse-bot" },
+    });
+
+    if (!res.ok) {
+      console.error(
+        `Failed to fetch labels for ${repoFullName}: ${res.status}`,
+      );
+      break;
+    }
+
+    const labels = (await res.json()) as Array<{ name: string }>;
+
+    if (labels.length === 0) {
+      // No more labels to fetch
+      break;
+    }
+
+    allLabels.push(...labels.map((l) => l.name));
+
+    // If we got fewer than perPage results, we've reached the last page
+    if (labels.length < perPage) {
+      break;
+    }
+
+    page++;
+  }
+
+  return allLabels;
 }
 
 export async function updateSubscriptionFilters(
   telegramId: number,
   repoFullName: string,
-  filters: { include: string[]; exclude: string[] }
+  filters: { include: string[]; exclude: string[] },
 ) {
   // Get userId and repoId
   const sqlUser = `SELECT id FROM users WHERE telegram_id = $1`;
